@@ -1,3 +1,7 @@
+#include <Servo.h>
+int servoPin = 9;
+Servo servo;  
+int servoAngle = 0;
 const int DetectorPin = 2;
 const int unlockPin = 10;
 const int resetPin = 4;
@@ -17,6 +21,8 @@ void setup() {
   pinMode(unlockPin, OUTPUT);
   pinMode(resetPin, OUTPUT);
   Serial.begin(9600);
+  servo.attach(servoPin);
+  servo.write(90); 
   attachInterrupt(digitalPinToInterrupt(DetectorPin), sound, LOW);
 }
 
@@ -39,6 +45,7 @@ void loop() {
     Serial.println("UNLOCKED");
     digitalWrite(unlockPin, HIGH);
     unlockedState = true;
+    servo.write(0); 
   };
 
   Serial.print("state 1: ");
@@ -60,7 +67,7 @@ void sound() {
   if (!state1 && !state2 && !state3 &&  3.5 <= currentTime && currentTime <= 5) {
     state1 = HIGH;
     Serial.println("HITTING IF 1");
-  }else if (state1 && !state2 && !state3 && 9.5 <= currentTime && currentTime <= 10.5) {
+  }else if (state1 && !state2 && !state3 && 9.5 <= currentTime && currentTime <= 11) {
     state2 = HIGH;
     Serial.println("HITTING IF 2");
   }else if (state1 && state2 && !state3 && 13.5 <= currentTime && currentTime <= 14.5) {
