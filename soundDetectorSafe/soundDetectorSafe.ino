@@ -1,10 +1,13 @@
+#include <LiquidCrystal.h>
 #include <Servo.h>
-int servoPin = 9;
+const int rs = 6, en = 7, d4 = 11, d5 = 10, d6 = 9, d7 = 8;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+int servoPin = 5;
 Servo servo;  
 int servoAngle = 0;
 const int DetectorPin = 2;
-const int unlockPin = 10;
-const int resetPin = 4;
+const int unlockPin = 4;
+const int resetPin = 3;
 //current Pin: 4s,10s,14s
 volatile byte state1 = LOW;
 volatile byte state2 = LOW;
@@ -13,6 +16,7 @@ bool unlockedState = false;
 float currentTime;
 bool hearSound;
 bool allowAccess = false;
+float LCDtime;
 void setup() {
   digitalWrite(resetPin, HIGH);
   currentTime = millis();
@@ -23,31 +27,26 @@ void setup() {
   Serial.begin(9600);
   servo.attach(servoPin);
   servo.write(90); 
+  lcd.begin(16, 2);
+  // Print a message to the LCD.
   attachInterrupt(digitalPinToInterrupt(DetectorPin), sound, LOW);
 }
 
 void loop() {
+  lcd.setCursor(0, 1);
   digitalRead(DetectorPin);
   Serial.println((float)micros() / 1000000);
- /* if (state1) {
-    Serial.println("true state 1");
-    Serial.println("");
-  }
-  if (state2) {
-    Serial.println("true state 2");
-    Serial.println("");
-  }
-  if (state3) {
-    Serial.println("true state 3");
-    Serial.println("");
-  }*/
+  lcd.print("LKD, Timer: ");
   if (state1 && state2 && state3) {
-    Serial.println("UNLOCKED");
+    lcd.clear();
+    delay(20);
+    lcd.print("UNLOCKED ");
     digitalWrite(unlockPin, HIGH);
     unlockedState = true;
     servo.write(0); 
   };
-
+ LCDtime= (float)micros() / 1000000;
+lcd.print(LCDtime);
   Serial.print("state 1: ");
   Serial.println(state1);
   Serial.print("state 2: ");
