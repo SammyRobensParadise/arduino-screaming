@@ -25,6 +25,19 @@ after about 70 minutes, however because the timer is reset after 30s, we do not 
 <b>Note:</b>
 The next phase in the project is to ammend the conditional logic in this phase to make it more robist and  easier to manipulate.
 
+# Hardware Requirements:
+1. Arduino UNO
+2. WaveShare Sound sensor (https://www.waveshare.com/sound-sensor.htm)
+3. Tower Pro Mirco Servo 9g (SG90)
+3. LED light as indicator (optional)
+4. Jumper wires
+5. Bread board
+
+# Software Dependencies:
+1. Servo library available under: Sketch/Include Libraries/servo.h
+* add `#include <servo.h>` to the top of your code.
+
+
 # Additional Notes:
 The `delay(500)` at the end of the `void loop()` ensures that there is time for a interrupt to be executed, and it is not overwritten. It is 
 critical to the design. increasing the time will cut accuracy by a factor of 1/2 for every 500ms added and vise  vera to decreasing the timeframe, although the clock seems to have trouble with times less then 100ms.
