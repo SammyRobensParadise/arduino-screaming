@@ -9,7 +9,7 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 float LCDtime;
 // Servo motor declaration
 int servoPin = 5;
-Servo servo;  
+Servo servo;
 int servoAngle = 0;
 // Program Pin Declaration
 //  Sound input pin, active LOW
@@ -42,20 +42,23 @@ bool hearSound;
 // state for allowing access to the safe
 bool allowAccess = false;
 //Combination Declaration Valriables
-volatile int setComboIndicator=0;
+volatile int setComboIndicator = 0;
 volatile float buttonHoldDownTime;
- 
+volatile byte comboState = LOW;
+int chooseTime = 0;
+int NumofCodesSelected = 1;
+bool addingState = false;
 //----------------------------------------------------------------
 void setup() {
   digitalWrite(resetPin, HIGH);
   currentTime = millis();
   pinMode(DetectorPin, INPUT);
-  pinMode(setComboSelectPin,INPUT);
+  pinMode(setComboSelectPin, INPUT);
   pinMode(unlockPin, OUTPUT);
   pinMode(resetPin, OUTPUT);
   Serial.begin(9600);
   servo.attach(servoPin);
-  servo.write(90); 
+  servo.write(90);
   lcd.begin(16, 2);
   attachInterrupt(digitalPinToInterrupt(DetectorPin), sound, LOW);
   attachInterrupt(digitalPinToInterrupt(setComboSelectPin), setComboDetect, CHANGE);
@@ -72,33 +75,36 @@ void loop() {
     lcd.print("UNLOCKED ");
     digitalWrite(unlockPin, HIGH);
     unlockedState = true;
-    servo.write(0); 
+    servo.write(0);
   };
- LCDtime= (float)micros() / 1000000;
-lcd.print(LCDtime);
-  Serial.print("state 1: ");
-  Serial.println(state1);
-  Serial.print("state 2: ");
-  Serial.println(state2);
-  Serial.print("state 3: ");
-  Serial.println(state3);
+  LCDtime = (float)micros() / 1000000;
+  lcd.print(LCDtime);
+  /* Serial.print("state 1: ");
+    Serial.println(state1);
+    Serial.print("state 2: ");
+    Serial.println(state2);
+    Serial.print("state 3: ");
+    Serial.println(state3);*/
   if (((float)millis() / 1000) >= 30 && !unlockedState) {
     digitalWrite(resetPin, LOW);
   }
-  
+  while (comboState == HIGH) {
+    lcd.clear();
+    setCombo();
+  }
   delay(500);
 }
 void sound() {
   Serial.println("SOUND DETECTED");
   currentTime = (float)micros() / 1000000;
-  
+
   if (!state1 && !state2 && !state3 &&  code1 - allowedError <= currentTime && currentTime <= code1 + allowedError) {
     state1 = !state1;
     Serial.println("detected state 1");
-  }else if (state1 && !state2 && !state3 && code2 - allowedError <= currentTime && currentTime <= code2 + allowedError) {
+  } else if (state1 && !state2 && !state3 && code2 - allowedError <= currentTime && currentTime <= code2 + allowedError) {
     state2 = !state2;
     Serial.println("detected state 2");
-  }else if (state1 && state2 && !state3 && code3 - allowedError <= currentTime && currentTime <= code3 + allowedError) {
+  } else if (state1 && state2 && !state3 && code3 - allowedError <= currentTime && currentTime <= code3 + allowedError) {
     Serial.println("detected state 3");
     state3 = !state3;
   } else {
@@ -106,20 +112,40 @@ void sound() {
   }
 }
 
-void setComboDetect(){
+void setComboDetect() {
   Serial.println("setCombotriggered");
-  if(setComboIndicator == 0){
-    buttonHoldDownTime = (float)micros()/1000000.0;
+  if (setComboIndicator == 0) {
+    buttonHoldDownTime = (float)micros() / 1000000.0;
     setComboIndicator++;
-    }else if(setComboIndicator == 1 && ((((float)micros()/1000000.0)-(float)buttonHoldDownTime)>=4.0)){
-      lcd.clear();
-      lcd.print("Set Combination Mode Enabled");
-      detachInterrupt(digitalPinToInterrupt(setComboSelectPin));
-    }else{
-      Serial.println("none triggered");
-      setComboIndicator = 0;
-      }
+  } else if (setComboIndicator == 1 && ((((float)micros() / 1000000.0) - (float)buttonHoldDownTime) >= 4.0)) {
+    lcd.clear();
+    lcd.print("Set Combination Mode Enabled");
+    comboState = !comboState;
+    detachInterrupt(digitalPinToInterrupt(setComboSelectPin));
+  } else {
+    Serial.println("none triggered");
+    setComboIndicator = 0;
+  }
 }
-void setCombo(){
-  
+void setCombo() {
+  lcd.setCursor(1, 0);
+  if (addingState == false) {
+    lcd.print("TT:LB,CT:RB");
+  }
+  if (digitalRead(3) == LOW) {
+    if (chooseTime == 1) {
+      addingState = true;
+    }
+    if (chooseTime >= 30) {
+      chooseTime = 0;
+    }
+    chooseTime++;
+    delay(150);
+  }
+  lcd.clear();
+  lcd.print("Time: ");
+  lcd.print(chooseTime);
+  lcd.print("s");
+  Serial.println(chooseTime);
+  delay(100);
 }
