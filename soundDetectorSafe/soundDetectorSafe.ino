@@ -1,37 +1,66 @@
+//Header Libraries
+//  LCD library
 #include <LiquidCrystal.h>
+//  Servo motor library
 #include <Servo.h>
+//int declaration for LCD
 const int rs = 6, en = 7, d4 = 11, d5 = 10, d6 = 9, d7 = 8;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+float LCDtime;
+// Servo motor declaration
 int servoPin = 5;
 Servo servo;  
 int servoAngle = 0;
+// Program Pin Declaration
+//  Sound input pin, active LOW
 const int DetectorPin = 2;
+//  Unlocked Indicator Pin
+const int setComboSelectPin = 3;
 const int unlockPin = 4;
-const int resetPin = 3;
-//current Pin: 4s,10s,14s
+//  Reset Arduino after 30s pin
+const int resetPin = 12;
+//  Combination pins
+//current code: 4s,10s,14s
+int code1 = 4;
+int code2 = 10;
+int code3  = 14;
+// allowed error in seconds from combination values
+int allowedError = 1.5;
+// Lock states
+//  state 1
 volatile byte state1 = LOW;
+//  state 2
 volatile byte state2 = LOW;
+//  state 3
 volatile byte state3 = LOW;
+// bool to store the state of the safe, whether it is locked or unlocked
 bool unlockedState = false;
+// stores the current time
 float currentTime;
+// detects whether a sound was heard
 bool hearSound;
+// state for allowing access to the safe
 bool allowAccess = false;
-float LCDtime;
+//Combination Declaration Valriables
+volatile int setComboIndicator=0;
+volatile float buttonHoldDownTime;
+ 
+//----------------------------------------------------------------
 void setup() {
   digitalWrite(resetPin, HIGH);
   currentTime = millis();
-  // put your setup code here, to run once:
   pinMode(DetectorPin, INPUT);
+  pinMode(setComboSelectPin,INPUT);
   pinMode(unlockPin, OUTPUT);
   pinMode(resetPin, OUTPUT);
   Serial.begin(9600);
   servo.attach(servoPin);
   servo.write(90); 
   lcd.begin(16, 2);
-  // Print a message to the LCD.
   attachInterrupt(digitalPinToInterrupt(DetectorPin), sound, LOW);
+  attachInterrupt(digitalPinToInterrupt(setComboSelectPin), setComboDetect, CHANGE);
 }
-
+//---------------------------------------------------------------
 void loop() {
   lcd.setCursor(0, 1);
   digitalRead(DetectorPin);
@@ -53,26 +82,44 @@ lcd.print(LCDtime);
   Serial.println(state2);
   Serial.print("state 3: ");
   Serial.println(state3);
-  
   if (((float)millis() / 1000) >= 30 && !unlockedState) {
     digitalWrite(resetPin, LOW);
   }
+  
   delay(500);
 }
 void sound() {
   Serial.println("SOUND DETECTED");
   currentTime = (float)micros() / 1000000;
   
-  if (!state1 && !state2 && !state3 &&  3.5 <= currentTime && currentTime <= 5) {
-    state1 = HIGH;
-    Serial.println("HITTING IF 1");
-  }else if (state1 && !state2 && !state3 && 9.5 <= currentTime && currentTime <= 11) {
-    state2 = HIGH;
-    Serial.println("HITTING IF 2");
-  }else if (state1 && state2 && !state3 && 13.5 <= currentTime && currentTime <= 14.5) {
-    Serial.println("HITTING IF 3");
+  if (!state1 && !state2 && !state3 &&  code1 - allowedError <= currentTime && currentTime <= code1 + allowedError) {
+    state1 = !state1;
+    Serial.println("detected state 1");
+  }else if (state1 && !state2 && !state3 && code2 - allowedError <= currentTime && currentTime <= code2 + allowedError) {
+    state2 = !state2;
+    Serial.println("detected state 2");
+  }else if (state1 && state2 && !state3 && code3 - allowedError <= currentTime && currentTime <= code3 + allowedError) {
+    Serial.println("detected state 3");
     state3 = !state3;
   } else {
     Serial.println("nothing detected");
   }
+}
+
+void setComboDetect(){
+  Serial.println("setCombotriggered");
+  if(setComboIndicator == 0){
+    buttonHoldDownTime = (float)micros()/1000000.0;
+    setComboIndicator++;
+    }else if(setComboIndicator == 1 && ((((float)micros()/1000000.0)-(float)buttonHoldDownTime)>=4.0)){
+      lcd.clear();
+      lcd.print("Set Combination Mode Enabled");
+      detachInterrupt(digitalPinToInterrupt(setComboSelectPin));
+    }else{
+      Serial.println("none triggered");
+      setComboIndicator = 0;
+      }
+}
+void setCombo(){
+  
 }
