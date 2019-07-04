@@ -48,6 +48,7 @@ volatile byte comboState = LOW;
 int chooseTime = 0;
 int NumofCodesSelected = 1;
 bool addingState = false;
+const int selectComboPin = 13;
 //----------------------------------------------------------------
 void setup() {
   digitalWrite(resetPin, HIGH);
@@ -56,6 +57,7 @@ void setup() {
   pinMode(setComboSelectPin, INPUT);
   pinMode(unlockPin, OUTPUT);
   pinMode(resetPin, OUTPUT);
+  pinMode(selectComboPin, INPUT);
   Serial.begin(9600);
   servo.attach(servoPin);
   servo.write(90);
@@ -67,7 +69,7 @@ void setup() {
 void loop() {
   lcd.setCursor(0, 1);
   digitalRead(DetectorPin);
-  Serial.println((float)micros() / 1000000);
+  // Serial.println((float)micros() / 1000000);
   lcd.print("LKD, Timer: ");
   if (state1 && state2 && state3) {
     lcd.clear();
@@ -91,6 +93,14 @@ void loop() {
   while (comboState == HIGH) {
     lcd.clear();
     setCombo();
+    Serial.print("code1 ");
+    Serial.println(code1);
+    Serial.print("code2 ");
+    Serial.println(code2);
+    Serial.print("code3 ");
+    Serial.println(code3);
+    Serial.print("NumofCodesSelected: ");
+    Serial.println(NumofCodesSelected);
   }
   delay(500);
 }
@@ -142,10 +152,24 @@ void setCombo() {
     chooseTime++;
     delay(150);
   }
+  if (digitalRead(selectComboPin) == LOW) {
+    if (NumofCodesSelected == 1) {
+      code1  = chooseTime;
+      NumofCodesSelected++;
+    } else if (NumofCodesSelected == 2) {
+      code2  = chooseTime;
+      NumofCodesSelected++;
+    } else if (NumofCodesSelected == 3) {
+      code3  = chooseTime;
+      NumofCodesSelected++;
+    } else {
+      NumofCodesSelected = 1;
+    }
+    delay(400);
+  }
   lcd.clear();
   lcd.print("Time: ");
   lcd.print(chooseTime);
   lcd.print("s");
-  Serial.println(chooseTime);
   delay(100);
 }
