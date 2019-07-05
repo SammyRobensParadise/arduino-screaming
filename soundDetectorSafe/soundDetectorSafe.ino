@@ -49,6 +49,7 @@ int chooseTime = 0;
 int NumofCodesSelected = 1;
 bool addingState = false;
 const int selectComboPin = 13;
+long counter_freq = 16000000/30000000;
 //----------------------------------------------------------------
 void setup() {
   digitalWrite(resetPin, HIGH);
@@ -69,7 +70,6 @@ void setup() {
 void loop() {
   lcd.setCursor(0, 1);
   digitalRead(DetectorPin);
-  // Serial.println((float)micros() / 1000000);
   lcd.print("LKD, Timer: ");
   if (state1 && state2 && state3) {
     lcd.clear();
@@ -79,8 +79,14 @@ void loop() {
     unlockedState = true;
     servo.write(0);
   };
-  LCDtime = (float)micros() / 1000000;
-  lcd.print(LCDtime);
+  if(_getMicros()<= 30){
+    LCDtime = _getMicros()/(float)counter_freq;
+    lcd.print(LCDtime);
+    }else if(_getMicros()> 30){
+     LCDtime = _getMicros();
+    lcd.print(LCDtime);
+    }
+    Serial.println(_getMicros()/counter_freq);
   /* Serial.print("state 1: ");
     Serial.println(state1);
     Serial.print("state 2: ");
@@ -173,3 +179,6 @@ void setCombo() {
   lcd.print("s");
   delay(100);
 }
+long _getMicros(){
+  return (float)micros() / 1000000.0;
+  }
