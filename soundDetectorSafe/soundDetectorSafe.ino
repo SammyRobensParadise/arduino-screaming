@@ -80,13 +80,13 @@ void loop() {
     servo.write(0);
   };
   if(_getMicros()<= 30){
-    LCDtime = _getMicros()/(float)counter_freq;
+    LCDtime = _getMicros();
     lcd.print(LCDtime);
     }else if(_getMicros()> 30){
      LCDtime = _getMicros();
     lcd.print(LCDtime);
     }
-    Serial.println(_getMicros()/counter_freq);
+    Serial.println(_getMicros());
   /* Serial.print("state 1: ");
     Serial.println(state1);
     Serial.print("state 2: ");
