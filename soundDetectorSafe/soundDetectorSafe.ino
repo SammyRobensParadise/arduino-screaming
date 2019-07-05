@@ -20,7 +20,7 @@ const int unlockPin = 4;
 //  Reset Arduino after 30s pin
 const int resetPin = 12;
 //  Combination pins
-//current code: 4s,10s,14s
+//DEFAULT CODE: 4s,10s,14s
 int code1 = 4;
 int code2 = 10;
 int code3  = 14;
@@ -49,9 +49,18 @@ int chooseTime = 0;
 int NumofCodesSelected = 1;
 bool addingState = false;
 const int selectComboPin = 13;
-long counter_freq = 16000000/30000000;
 //----------------------------------------------------------------
 void setup() {
+  //Timer code---------
+  TCCR0A = 0x0; // reset Timer1 control registers
+  TCCR0B = 0x0; // set WGM_2:0 = 000
+  TCCR0B = 0x3; // set Timer1 clock frequency to clk/256, CS_2:0 = 100
+  TIMSK1 = 0x6; // enable OC interrupts bits, OCIE1A and OCIE1B
+  OCR1B = 0; // set Output Compare Value B
+  TCNT1 = 0; // set Timer1 to 42420 as the starting value
+  TIMSK1 = 0x1; // enable overflow interrupt bit, TOIE1 = 1
+  //------------------
+
   digitalWrite(resetPin, HIGH);
   currentTime = millis();
   pinMode(DetectorPin, INPUT);
@@ -65,9 +74,16 @@ void setup() {
   lcd.begin(16, 2);
   attachInterrupt(digitalPinToInterrupt(DetectorPin), sound, LOW);
   attachInterrupt(digitalPinToInterrupt(setComboSelectPin), setComboDetect, CHANGE);
+  sei(); // enable interrupts
 }
 //---------------------------------------------------------------
 void loop() {
+  Serial.print("TCCR0B   ");
+  Serial.println(TCCR0B);
+  Serial.print("TCNT0  ");
+  Serial.println(TCNT0);
+  Serial.print("_getMicros()    ");
+  Serial.println(_getMicros());
   lcd.setCursor(0, 1);
   digitalRead(DetectorPin);
   lcd.print("LKD, Timer: ");
@@ -79,14 +95,14 @@ void loop() {
     unlockedState = true;
     servo.write(0);
   };
-  if(_getMicros()<= 30){
+  if (_getMicros() <= 30) {
     LCDtime = _getMicros();
     lcd.print(LCDtime);
-    }else if(_getMicros()> 30){
-     LCDtime = _getMicros();
+  } else if (_getMicros() > 30) {
+    LCDtime = _getMicros();
     lcd.print(LCDtime);
-    }
-    Serial.println(_getMicros());
+  }
+
   /* Serial.print("state 1: ");
     Serial.println(state1);
     Serial.print("state 2: ");
@@ -99,16 +115,27 @@ void loop() {
   while (comboState == HIGH) {
     lcd.clear();
     setCombo();
-    Serial.print("code1 ");
-    Serial.println(code1);
-    Serial.print("code2 ");
-    Serial.println(code2);
-    Serial.print("code3 ");
-    Serial.println(code3);
-    Serial.print("NumofCodesSelected: ");
-    Serial.println(NumofCodesSelected);
+    /* Serial.print("code1 ");
+      Serial.println(code1);
+      Serial.print("code2 ");
+      Serial.println(code2);
+      Serial.print("code3 ");
+      Serial.println(code3);
+      Serial.print("NumofCodesSelected: ");
+      Serial.println(NumofCodesSelected); */
   }
   delay(500);
+}
+
+ISR (TIMER1_COMPB_vect) {
+  if (TCCR1B >= 30) {
+    Serial.println("triggereeeed");
+  }
+}
+ISR (TIMER1_OVF_vect) {
+  Serial.print("TIMER1_OVF   ");
+  Serial.println(TCNT1); // enable for testing
+  TCNT1 = 0; // count UP to 0xFFFF, overflow to 0, and then start again from 42420
 }
 void sound() {
   Serial.println("SOUND DETECTED");
@@ -179,6 +206,6 @@ void setCombo() {
   lcd.print("s");
   delay(100);
 }
-long _getMicros(){
+long _getMicros() {
   return (float)micros() / 1000000.0;
-  }
+}
