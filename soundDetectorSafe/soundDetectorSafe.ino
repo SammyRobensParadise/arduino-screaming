@@ -49,18 +49,16 @@ int chooseTime = 0;
 int NumofCodesSelected = 1;
 bool addingState = false;
 const int selectComboPin = 13;
+volatile unsigned int edgeCounter = 0;
 //----------------------------------------------------------------
 void setup() {
+  cli();
   //Timer code---------
-  TCCR0A = 0x0; // reset Timer1 control registers
-  TCCR0B = 0x0; // set WGM_2:0 = 000
-  TCCR0B = 0x3; // set Timer1 clock frequency to clk/256, CS_2:0 = 100
-  TIMSK1 = 0x6; // enable OC interrupts bits, OCIE1A and OCIE1B
-  OCR1B = 0; // set Output Compare Value B
-  TCNT1 = 0; // set Timer1 to 42420 as the starting value
-  TIMSK1 = 0x1; // enable overflow interrupt bit, TOIE1 = 1
+  TCCR1A = 0; // Reset control registers timer1 /not needed, safety
+  TCCR1B = 0; // Reset control registers timer1 // not needed, safety
+  TIMSK2 |= _BV(TOIE1);
   //------------------
-
+  sei();
   digitalWrite(resetPin, HIGH);
   currentTime = millis();
   pinMode(DetectorPin, INPUT);
@@ -74,16 +72,9 @@ void setup() {
   lcd.begin(16, 2);
   attachInterrupt(digitalPinToInterrupt(DetectorPin), sound, LOW);
   attachInterrupt(digitalPinToInterrupt(setComboSelectPin), setComboDetect, CHANGE);
-  sei(); // enable interrupts
 }
 //---------------------------------------------------------------
 void loop() {
-  Serial.print("TCCR0B   ");
-  Serial.println(TCCR0B);
-  Serial.print("TCNT0  ");
-  Serial.println(TCNT0);
-  Serial.print("_getMicros()    ");
-  Serial.println(_getMicros());
   lcd.setCursor(0, 1);
   digitalRead(DetectorPin);
   lcd.print("LKD, Timer: ");
@@ -95,13 +86,6 @@ void loop() {
     unlockedState = true;
     servo.write(0);
   };
-  if (_getMicros() <= 30) {
-    LCDtime = _getMicros();
-    lcd.print(LCDtime);
-  } else if (_getMicros() > 30) {
-    LCDtime = _getMicros();
-    lcd.print(LCDtime);
-  }
 
   /* Serial.print("state 1: ");
     Serial.println(state1);
@@ -124,39 +108,40 @@ void loop() {
       Serial.print("NumofCodesSelected: ");
       Serial.println(NumofCodesSelected); */
   }
-  delay(500);
+  delay(100);
+  if(edgeCounter > 3000){
+    Serial.println("30SECONDS");
+    }
 }
 
-ISR (TIMER1_COMPB_vect) {
-  if (TCCR1B >= 30) {
-    Serial.println("triggereeeed");
-  }
+ISR(TIMER2_OVF_vect) {
+  Serial.println("sfsdf");
+    Serial.println(TCNT2);
+    Serial.println(edgeCounter);
+    TCNT0=0;
+  edgeCounter = edgeCounter + 1;
 }
-ISR (TIMER1_OVF_vect) {
-  Serial.print("TIMER1_OVF   ");
-  Serial.println(TCNT1); // enable for testing
-  TCNT1 = 0; // count UP to 0xFFFF, overflow to 0, and then start again from 42420
-}
+
 void sound() {
-  Serial.println("SOUND DETECTED");
+  //Serial.println("SOUND DETECTED");
   currentTime = (float)micros() / 1000000;
 
   if (!state1 && !state2 && !state3 &&  code1 - allowedError <= currentTime && currentTime <= code1 + allowedError) {
     state1 = !state1;
-    Serial.println("detected state 1");
+    //  Serial.println("detected state 1");
   } else if (state1 && !state2 && !state3 && code2 - allowedError <= currentTime && currentTime <= code2 + allowedError) {
     state2 = !state2;
-    Serial.println("detected state 2");
+    //    Serial.println("detected state 2");
   } else if (state1 && state2 && !state3 && code3 - allowedError <= currentTime && currentTime <= code3 + allowedError) {
-    Serial.println("detected state 3");
+    //   Serial.println("detected state 3");
     state3 = !state3;
   } else {
-    Serial.println("nothing detected");
+    //    Serial.println("nothing detected");
   }
 }
 
 void setComboDetect() {
-  Serial.println("setCombotriggered");
+  // Serial.println("setCombotriggered");
   if (setComboIndicator == 0) {
     buttonHoldDownTime = (float)micros() / 1000000.0;
     setComboIndicator++;
