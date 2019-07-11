@@ -70,6 +70,7 @@ void setup() {
   pinMode(resetPin, OUTPUT);
   pinMode(selectComboPin, INPUT);
   pinMode(A1,INPUT);
+  pinMode(A2,INPUT);
   Serial.begin(9600);
   servo.attach(servoPin);
   servo.write(90);
@@ -79,7 +80,7 @@ void setup() {
 }
 //---------------------------------------------------------------
 void loop() {
-  Serial.println(digitalRead(A1));
+  Serial.println(digitalRead(A2));
   lcd.setCursor(0, 1);
   digitalRead(DetectorPin);
   lcd.print("LKD, Timer: ");
@@ -92,16 +93,15 @@ void loop() {
     unlockedState = true;
     servo.write(0);
   };
-
-  /* Serial.print("state 1: ");
-    Serial.println(state1);
-    Serial.print("state 2: ");
-    Serial.println(state2);
-    Serial.print("state 3: ");
-    Serial.println(state3);*/
-  /*if (((float)millis() / 1000) >= 30 && !unlockedState) {
-    digitalWrite(resetPin, LOW);
-    }*/
+  if(digitalRead(A2)== LOW){
+    lcd.clear();
+    delay(20);
+    lcd.print("LOCKED");
+    digitalWrite(unlockPin, LOW);
+    unlockedState = false;
+    state1,state2,state3 = LOW;
+    servo.write(90);
+    }
   while (comboState == HIGH) {
    if(digitalRead(A1)==LOW){
     comboState = LOW;
