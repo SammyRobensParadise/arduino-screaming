@@ -3,6 +3,7 @@
 #include <LiquidCrystal.h>
 //  Servo motor library
 #include <Servo.h>
+
 //int declaration for LCD
 const int rs = 6, en = 7, d4 = 11, d5 = 10, d6 = 9, d7 = 8;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
@@ -108,20 +109,19 @@ void loop() {
       Serial.print("NumofCodesSelected: ");
       Serial.println(NumofCodesSelected); */
   }
-  delay(100);
-  if(edgeCounter > 3000){
-    Serial.println("30SECONDS");
-    }
+  Serial.println("inLoop");
+  Serial.println(edgeCounter);
+  delay(500);
+
 }
 
 ISR(TIMER2_OVF_vect) {
-  Serial.println("sfsdf");
-    Serial.println(TCNT2);
-    Serial.println(edgeCounter);
-    TCNT0=0;
+  TCNT2 = 250;
   edgeCounter = edgeCounter + 1;
-}
-
+  if (edgeCounter > 30000) {
+    Serial.println("30SECONDS");
+  }
+} 
 void sound() {
   //Serial.println("SOUND DETECTED");
   currentTime = (float)micros() / 1000000;
