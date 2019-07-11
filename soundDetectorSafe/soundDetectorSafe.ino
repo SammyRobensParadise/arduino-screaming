@@ -1,9 +1,10 @@
 //Header Libraries
+//Libraries
 //  LCD library
 #include <LiquidCrystal.h>
 //  Servo motor library
 #include <Servo.h>
-
+//-----------------------------
 //int declaration for LCD
 const int rs = 6, en = 7, d4 = 11, d5 = 10, d6 = 9, d7 = 8;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
@@ -22,6 +23,7 @@ const int unlockPin = 4;
 const int resetPin = 12;
 //  Combination pins
 //DEFAULT CODE: 4s,10s,14s
+//If the arduino is reset, then the default code will be triggered at code1 = 4s,code2 = 10s, code3 = 14s 
 int code1 = 4;
 int code2 = 10;
 int code3  = 14;
@@ -67,6 +69,7 @@ void setup() {
   pinMode(unlockPin, OUTPUT);
   pinMode(resetPin, OUTPUT);
   pinMode(selectComboPin, INPUT);
+  pinMode(A1,INPUT);
   Serial.begin(9600);
   servo.attach(servoPin);
   servo.write(90);
@@ -76,9 +79,11 @@ void setup() {
 }
 //---------------------------------------------------------------
 void loop() {
+  Serial.println(digitalRead(A1));
   lcd.setCursor(0, 1);
   digitalRead(DetectorPin);
   lcd.print("LKD, Timer: ");
+  lcd.print((float)edgeCounter / 1000);
   if (state1 && state2 && state3) {
     lcd.clear();
     delay(20);
@@ -94,20 +99,32 @@ void loop() {
     Serial.println(state2);
     Serial.print("state 3: ");
     Serial.println(state3);*/
-  if (((float)millis() / 1000) >= 30 && !unlockedState) {
+  /*if (((float)millis() / 1000) >= 30 && !unlockedState) {
     digitalWrite(resetPin, LOW);
-  }
+    }*/
   while (comboState == HIGH) {
+   if(digitalRead(A1)==LOW){
+    comboState = LOW;
+      lcd.clear();
+      lcd.print("Code Set");
+      attachInterrupt(digitalPinToInterrupt(setComboSelectPin),setComboDetect, CHANGE);
+      lcd.setCursor(0,1);
+      lcd.clear();
+      //reseting value for next combo selection
+      setComboIndicator = 0;
+      //requires the button to be pressed for 200+ milliseconds
+      delay(200);
+      } 
     lcd.clear();
     setCombo();
-    /* Serial.print("code1 ");
-      Serial.println(code1);
-      Serial.print("code2 ");
-      Serial.println(code2);
-      Serial.print("code3 ");
-      Serial.println(code3);
-      Serial.print("NumofCodesSelected: ");
-      Serial.println(NumofCodesSelected); */
+  /*  Serial.print("code1 ");
+    Serial.println(code1);
+    Serial.print("code2 ");
+    Serial.println(code2);
+    Serial.print("code3 ");
+    Serial.println(code3);
+    Serial.print("NumofCodesSelected: ");
+    Serial.println(NumofCodesSelected); */
   }
   Serial.println("inLoop");
   Serial.println(edgeCounter);
@@ -118,13 +135,13 @@ void loop() {
 ISR(TIMER2_OVF_vect) {
   TCNT2 = 250;
   edgeCounter = edgeCounter + 1;
-  if (edgeCounter > 30000) {
-    Serial.println("30SECONDS");
+  if (edgeCounter > 30050) {
+    edgeCounter = 0;
   }
-} 
+}
 void sound() {
-  //Serial.println("SOUND DETECTED");
-  currentTime = (float)micros() / 1000000;
+ // Serial.println("SOUND DETECTED");
+  currentTime = (float)edgeCounter / 1000;
 
   if (!state1 && !state2 && !state3 &&  code1 - allowedError <= currentTime && currentTime <= code1 + allowedError) {
     state1 = !state1;
@@ -141,25 +158,25 @@ void sound() {
 }
 
 void setComboDetect() {
-  // Serial.println("setCombotriggered");
   if (setComboIndicator == 0) {
-    buttonHoldDownTime = (float)micros() / 1000000.0;
+    buttonHoldDownTime = _getMicros();
     setComboIndicator++;
-  } else if (setComboIndicator == 1 && ((((float)micros() / 1000000.0) - (float)buttonHoldDownTime) >= 4.0)) {
+  } else if (setComboIndicator == 1 && ((_getMicros() - (float)buttonHoldDownTime) >= 4.0)) {
     lcd.clear();
     lcd.print("Set Combination Mode Enabled");
     comboState = !comboState;
     detachInterrupt(digitalPinToInterrupt(setComboSelectPin));
   } else {
-    Serial.println("none triggered");
     setComboIndicator = 0;
   }
 }
+//Is called from the main loop on a state update that allows the user
+//to select their combination.
+
 void setCombo() {
-  lcd.setCursor(1, 0);
-  if (addingState == false) {
+ /* if (addingState == false) {
     lcd.print("TT:LB,CT:RB");
-  }
+  } */
   if (digitalRead(3) == LOW) {
     if (chooseTime == 1) {
       addingState = true;
@@ -185,12 +202,32 @@ void setCombo() {
     }
     delay(400);
   }
+  if(comboState == HIGH){
   lcd.clear();
   lcd.print("Time: ");
   lcd.print(chooseTime);
   lcd.print("s");
+  if (NumofCodesSelected == 1) {
+    lcd.print("  set A");
+  }
+  else if (NumofCodesSelected == 2) {
+    lcd.print("  set B");
+  } else if (NumofCodesSelected == 3) {
+    lcd.print("  set C");
+  }
+  lcd.setCursor(0, 2);
+  lcd.print("A:");
+  lcd.print(code1);
+  lcd.print(" ");
+  lcd.print("B:");
+  lcd.print(code2);
+  lcd.print(" ");
+  lcd.print("C:");
+  lcd.print(code3);
   delay(100);
+  }
 }
+//returns a value in seconds from micros TCCR0
 long _getMicros() {
   return (float)micros() / 1000000.0;
 }
