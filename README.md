@@ -21,20 +21,22 @@ There are three states: `volatile byte state1, volatile byte state2,volatile byt
 to a specific condition that is held during the <b>ISR</b>. All three states must be set to `HIGH` or `true` in order for the conditional statement that triggers the servo motor to rotate to be executed, and `bool unlockedState` is set to `true`. press the red button to lock the safe again.
 `int allowedError` is a value in seconds that is the error bound from the combo time that the system will accept as a valid trigger. for example, if there is a combo value at 4s (`code1 = 4;`) then code will accept a sound that falls between 2.5 seconds and 5.5 seconds. that value must be changed in the source code.
 
+
+
 # Functions:
-`void setup()`
+1. `void setup()`
 * Standard arduino setup function, this is only run once after reset
-`void loop()`
+2. `void loop()`
 * Main loop of the arduino
-`ISR(TIMER2_OVF_vect)`
+3. `ISR(TIMER2_OVF_vect)`
 * Overflow ISR interrupt that is  triggered whenever Timer 2 (TCNT2) overflows. In the interrupt it sets `TCNT2 = 250` causing the timer to overflow every milimsecond and increments the edge counter. if the edge counter is greater then 30,000, meaning that the Timer has overflowed 30 000 times, (30 seconds) then `edgeCounter` is reset to 0.
-`void sound()`
+4. `void sound()`
 * Interrrupt that is triggered whenever there is a sound detected. It will check if the sound matches a specific state and if the time aligns with a `code` and  if it does, then it will update the state of the unlocking bytes.
-`void setComboDetect()`
+5. `void setComboDetect()`
 * Interrupt triggered that will interrupt the code into the `setCombo  state`.
-`void setCombo()` 
+6. `void setCombo()` 
 * sets the new combo for the safe. Note that if the arduino is reset, these values will no be preserved and will be overwritten to the default (4s,10s,14s).
-`long _getMicros()`
+7. `long _getMicros()`
 * returns the value of `micros()` from TCNT0 in seconds as a `long`.
 
 
