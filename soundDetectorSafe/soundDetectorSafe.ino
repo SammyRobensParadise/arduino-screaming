@@ -174,9 +174,6 @@ void setComboDetect() {
 //to select their combination.
 
 void setCombo() {
- /* if (addingState == false) {
-    lcd.print("TT:LB,CT:RB");
-  } */
   if (digitalRead(3) == LOW) {
     if (chooseTime == 1) {
       addingState = true;
