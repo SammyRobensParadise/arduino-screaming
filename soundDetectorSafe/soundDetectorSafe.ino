@@ -78,6 +78,7 @@ void setup()
   pinMode(A2, INPUT);
   //new-interrupt
   pinMode(A3, INPUT);
+   pinMode(A4, INPUT);
   Serial.begin(9600);
   servo.attach(servoPin);
   servo.write(90);
@@ -88,7 +89,10 @@ void setup()
 //---------------------------------------------------------------
 void loop()
 {
-  Serial.println(digitalRead(A2));
+  Serial.print("A3: ");
+  Serial.println(digitalRead(A3));
+  Serial.print("A4: ");
+  Serial.println(digitalRead(A4));
   lcd.setCursor(0, 1);
   digitalRead(DetectorPin);
   lcd.print("LKD, Timer: ");
@@ -102,7 +106,7 @@ void loop()
     unlockedState = true;
     servo.write(0);
   };
-  if (digitalRead(A2) == LOW)
+/*  if (digitalRead(A2) == LOW)
   {
     lcd.clear();
     delay(20);
@@ -111,7 +115,7 @@ void loop()
     unlockedState = false;
     state1, state2, state3 = LOW;
     servo.write(90);
-  }
+  } */
   while (comboState == HIGH)
   {
     if (digitalRead(A1) == LOW)
@@ -180,6 +184,16 @@ void sound()
 
 void setComboDetect()
 {
+    if (digitalRead(A4) == LOW)
+  {
+    lcd.clear();
+    delay(20);
+    lcd.print("LOCKED");
+    digitalWrite(unlockPin, LOW);
+    unlockedState = false;
+    state1, state2, state3 = LOW;
+    servo.write(90);
+  }
   if (setComboIndicator == 0)
   {
     buttonHoldDownTime = _getMicros();
