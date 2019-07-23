@@ -14,7 +14,7 @@ This a program that is written as part of a school project. It uses a sound sens
 5. `resetPin` is  an <b>optional</b> pin that if dragged to the reset pin on arduino uno
 will cause the arduino to reset after 30 seconds.  Use caution if using the pin, since it will cause the arduino to undergo a full reset and will also reset the `code1,code2,code3` values that maintain the current comination values
 6. Analog pin A1 is used for detecting the flag that will exit the `setCombo` state
-7. Analog pin A2 is used for locking  the safe (triggering the servo to turn back to 0 degrees)
+7. Analog pin A4 is used for locking  the safe (triggering the servo to turn back to 0 degrees). There is an AND gate that checks if the "lock safe" button has been triggered and this pin is polled to verify that the correct button has been triggered
 
 # How the code works:
 There are three states: `volatile byte state1, volatile byte state2,volatile byte state3`. Each state corresponds
@@ -61,6 +61,7 @@ The next phase in the project is to ammend the conditional logic in this phase t
 6. 4x standard breadboard buttons
 7. Hardware required to construct the physical safe
 8. 9V battery if the intent is to use the safe for a specific level  of functionality
+9. For Prototyping purposes, the Servo motor is connected to an external power source. Connecting the Servo motor directly to the Arduino UNO was attempted, however the current  draw from the Tower Pro Mirco Servo 9g (SG90) is about 550mA and would cause voltage drops across the circuit that caused problems. To get around this the Motor is attached to an external power source at 5.00V and a max value of 0.6A, or 600mA. If constructing the circuit, ensure that the <b>grounds are equalized</b>.
 
 # Software Dependencies:
 1. Servo library available under: Sketch/Include Libraries/servo.h
